@@ -3,129 +3,86 @@
 <head>
     <meta charset="utf-8">
     <title>Folder Sorter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- RESET & BASE --- */
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
         
         html, body {
+            width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #232323; 
-            color: #b5b5b5; 
+            background-color: #222222; /* Родной цвет панели Adobe */
             font-family: "Adobe Clean", "Segoe UI", sans-serif; 
             user-select: none;
             cursor: default;
         }
 
         body {
+            padding: 4px;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 16px;
-        }
-
-        /* --- HEADER --- */
-        h1 { 
-            margin-bottom: 20px; 
-            font-size: 14px; 
-            text-transform: uppercase; 
-            letter-spacing: 2px;
-            color: #ececec;
-            font-weight: 900;
-        }
-
-        /* --- MAIN BUTTONS --- */
-        .controls {
             width: 100%;
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
+            height: 100%;
         }
 
-        button {
+        .toolbar {
+            display: grid;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            padding: 3px;
+            border-radius: 6px;
+            border: 1px solid #2d2d2d;
+            grid-template-columns: repeat(auto-fit, minmax(28px, 1fr));
+            grid-auto-rows: 1fr;
+            gap: 4px;
+        }
+
+        .btn-action {
+            background: transparent;
             border: none;
+            color: #2d8ceb;
+            width: 100%;
+            height: 100%;
+            font-size: 14px;
             border-radius: 4px;
             cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        /* Sort Button (Hero) */
-        .btn-main { 
-            background: #2d8ceb; 
-            color: #fff; 
-            padding: 16px 0; 
-            font-size: 14px;
-            width: 100%;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-        .btn-main:hover { background: #3fa0ff; transform: translateY(-1px); }
-        .btn-main:active { background: #0064c8; transform: translateY(1px); }
-
-        /* --- STATUS AREA --- */
-        #status-container {
-            flex-grow: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            text-align: center;
+            transition: background-color 0.15s ease, color 0.15s ease;
         }
 
-        #status {
-            font-size: 16px;
-            font-weight: bold;
-            transition: color 0.3s;
-            opacity: 0.8;
-            line-height: 1.4;
+        .btn-action:hover {
+            background-color: #333333;
         }
 
-        /* Status Colors */
-        .status-ready   { color: #777; font-weight: normal !important; font-size: 12px !important; }
-        .status-process { color: #f1c40f; } /* Yellow */
-        .status-success { color: #2ecc71; text-shadow: 0 0 10px rgba(46, 204, 113, 0.2); } /* Green */
-        .status-error   { color: #e74c3c; } /* Red */
-
-        /* --- FOOTER --- */
-        .footer {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            margin-top: auto;
-            padding-top: 15px;
-            border-top: 1px solid #333;
+        .btn-action:active {
+            background-color: #111111;
         }
 
-        .btn-footer {
-            background: transparent;
-            color: #666;
-            font-size: 10px;
-            padding: 6px 10px;
-            border-radius: 3px;
-            flex: 1;
+        .btn-secondary {
+            color: #888888;
         }
-        .btn-footer:hover { background: #333; color: #ccc; }
-        .btn-footer:active { background: #222; color: #fff; }
+        .btn-secondary:hover {
+            color: #cccccc;
+        }
+
+        .btn-action.status-process { color: #f1c40f !important; }
+        .btn-action.status-success { color: #2ecc71 !important; }
+        .btn-action.status-error   { color: #e74c3c !important; }
 
     </style>
 </head>
 <body>
-    <h1>📂 Sorter v2.1.1</h1>
-    
-    <div class="controls">
-        <button id="sortBtn" class="btn-main">Sort Files</button>
-    </div>
 
-    <div id="status-container">
-        <div id="status" class="status-ready">Ready to clean up</div>
-    </div>
+    <div class="toolbar">
+        <button id="sortBtn" class="btn-action" title="Sort Files & Templates">
+            <i class="fa-solid fa-folder-tree"></i>
+        </button>
 
-    <div class="footer">
-        <button id="devBtn" class="btn-footer">Developer</button>
-        <button id="codeBtn" class="btn-footer">Source Code</button>
+        <button id="codeBtn" class="btn-action btn-secondary" title="Source Code (v3)">
+            <i class="fa-solid fa-code"></i>
+        </button>
     </div>
 
     <script src="js/CSInterface.js"></script>
