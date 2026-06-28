@@ -15,8 +15,9 @@
     sortBtn.addEventListener('click', function () {
         setSystemStatus("Processing...", "process");
 
-        var extPath     = csInterface.getSystemPath(SystemPath.EXTENSION);
-        var fsResult    = window.cep.fs.readFile(extPath + '/settings.json', 'UTF-8');
+        var settingsPath = window.getFolderSorterSettingsPath ? window.getFolderSorterSettingsPath() : null;
+        var fsResult = settingsPath ? window.cep.fs.readFile(settingsPath, 'UTF-8') : null;
+        
         var settingsArg = (fsResult && fsResult.err === 0 && fsResult.data)
             ? JSON.stringify(fsResult.data)
             : 'null';

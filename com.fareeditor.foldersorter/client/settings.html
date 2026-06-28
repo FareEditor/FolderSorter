@@ -289,6 +289,7 @@ iconify-icon { display: inline-flex; vertical-align: middle; }
 </div>
 
 <script src="js/CSInterface.js"></script>
+<script src="js/paths.js"></script>
 <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 <script>
 'use strict';
@@ -341,7 +342,7 @@ var selection   = { type: 'category', index: 0 }; // type: 'category' | 'templat
 // ── File I/O ──────────────────────────────────────────────────────────────────
 
 function getSettingsPath() {
-    return csInterface.getSystemPath(SystemPath.EXTENSION) + "/settings.json";
+    return window.getFolderSorterSettingsPath();
 }
 
 function loadSettings() {
@@ -349,7 +350,6 @@ function loadSettings() {
         var result = window.cep.fs.readFile(getSettingsPath(), "UTF-8");
         if (result.err === 0) {
             var parsed = JSON.parse(result.data);
-            // Ensure children arrays exist (backwards compat)
             ['premiere', 'aftereffects'].forEach(function(app) {
                 if (parsed[app] && parsed[app].categories) {
                     parsed[app].categories.forEach(function(cat) {
@@ -369,7 +369,7 @@ function saveSettings() {
     var json = JSON.stringify(state, null, 2);
     var result = window.cep.fs.writeFile(getSettingsPath(), json, "UTF-8");
     if (result.err !== 0) {
-        alert("Could not write settings.json — check extension folder permissions.");
+        alert("Could not write settings.json — check user folder permissions. Error code: " + result.err);
         return;
     }
     csInterface.closeExtension();
@@ -394,15 +394,21 @@ function switchApp(app) {
 
 function flushDetail() {
     var nameEl = document.getElementById('folderNameInput');
-    if (!nameEl) return;
+    // Если элемента нет на экране, просто выходим безболезненно
+    if (!nameEl) return; 
+    
     var val = nameEl.value.trim();
-    if (!val) return;
+    // Не даем перезаписать имя пустой строкой
+    if (!val) return; 
 
     if (selection.type === 'templates') {
         state[currentApp].templates.folder = val;
-    } else {
-        var cat = state[currentApp].categories[selection.index];
-        if (cat) cat.folder = val;
+    } else if (selection.type === 'category') {
+        // Жестко проверяем, что индекс существует в массиве, прежде чем писать
+        var categories = state[currentApp].categories;
+        if (categories && categories[selection.index]) {
+            categories[selection.index].folder = val;
+        }
     }
 }
 
@@ -410,22 +416,28 @@ function flushDetail() {
 
 function addCategory() {
     flushDetail();
+    if (!state[currentApp].categories) {
+        state[currentApp].categories = [];
+    }
     state[currentApp].categories.push({ folder: "New Folder", extensions: [], children: [] });
     selection = { type: 'category', index: state[currentApp].categories.length - 1 };
     render();
+    
     // auto-focus name field
     var el = document.getElementById('folderNameInput');
     if (el) { el.focus(); el.select(); }
 }
 
 function deleteCategory(idx) {
-    flushDetail();
+    // Перед удалением не вызываем flushDetail, чтобы не сохранить мусор
     state[currentApp].categories.splice(idx, 1);
+    
     if (selection.type === 'category') {
         var len = state[currentApp].categories.length;
         if (len === 0) {
             selection = { type: 'templates' };
         } else {
+            // Защита от выхода за границы массива при удалении активной строки
             selection.index = Math.min(selection.index, len - 1);
         }
     }
@@ -433,14 +445,31 @@ function deleteCategory(idx) {
 }
 
 function selectCategory(idx) {
+    // 1. Сначала сохраняем то, что юзер ввел в старой категории
     flushDetail();
-    selection = { type: 'category', index: idx };
+    // 2. Только потом меняем индекс на новый
+    selection.type = 'category';
+    selection.index = idx;
+    // 3. Полностью перерисовываем интерфейс с новыми данными
     render();
 }
 
 function selectTemplates() {
     flushDetail();
-    selection = { type: 'templates' };
+    selection.type = 'templates';
+    render();
+}
+
+function switchApp(app) {
+    flushDetail();
+    currentApp = app;
+    // При смене приложения сбрасываем индекс на нулевой, проверяя, есть ли там вообще категории
+    var hasCats = state[currentApp].categories && state[currentApp].categories.length > 0;
+    selection = hasCats ? { type: 'category', index: 0 } : { type: 'templates' };
+    
+    document.querySelectorAll('.tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.app === app);
+    });
     render();
 }
 
@@ -595,13 +624,11 @@ function buildTemplatesDetail(tpl) {
 function buildCategoryDetail(cat, catIdx) {
     var s = '';
 
-    // Folder name
     s += '<div class="field-group">';
     s += '<div class="field-label">Folder Name</div>';
     s += '<input class="field-input" id="folderNameInput" type="text" value="' + a(cat.folder) + '" />';
     s += '</div>';
 
-    // Extensions
     s += '<div class="field-group">';
     s += '<div class="field-label">File Extensions</div>';
     s += '<div class="chips">';
@@ -614,7 +641,6 @@ function buildCategoryDetail(cat, catIdx) {
     s += '</div>';
     s += '</div>';
 
-    // Sub-folders
     s += '<div class="field-group">';
     s += '<div class="field-label">Sub-folders</div>';
     s += '<div class="subfolder-list">';
@@ -646,8 +672,6 @@ function buildCategoryDetail(cat, catIdx) {
     return s;
 }
 
-// ── Escape helpers ────────────────────────────────────────────────────────────
-
 function h(str) {
     return String(str)
         .replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -656,8 +680,6 @@ function h(str) {
 function a(str) {
     return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
 }
-
-// ── Update check ──────────────────────────────────────────────────────────────
 
 function checkForUpdates() {
     var currentVersion = "1.0";
@@ -712,8 +734,6 @@ function renderUpdateBanner(version, url) {
         });
     }
 }
-
-// ── Init ──────────────────────────────────────────────────────────────────────
 
 loadSettings();
 render();
