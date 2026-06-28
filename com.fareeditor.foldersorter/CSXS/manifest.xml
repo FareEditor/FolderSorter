@@ -14,12 +14,13 @@
       <Locale Code="All" />
     </LocaleList>
     <RequiredRuntimeList>
-      <RequiredRuntime Name="CSXS" Version="9.0" />
+      <RequiredRuntime Name="CSXS" Version="6.0" />
     </RequiredRuntimeList>
   </ExecutionEnvironment>
   <DispatchInfoList>
     <Extension Id="com.fareeditor.foldersorter">
       <DispatchInfo>
+        <Name>Folder Sorter</Name>
         <Resources>
           <MainPath>./client/index.html</MainPath>
           <ScriptPath>./host/index.jsx</ScriptPath>
@@ -44,6 +45,7 @@
     </Extension>
     <Extension Id="com.fareeditor.foldersorter.settings">
       <DispatchInfo>
+        <Name>Folder Sorter</Name>
         <Resources>
           <MainPath>./client/settings.html</MainPath>
           <CEFCommandLine>
