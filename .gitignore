@@ -1,0 +1,17 @@
+node_modules/
+.npm/
+*.p12
+*.zxp
+.debug
+.pings
+cef_debug.log
+CSXS*.log
+Thumbs.db
+Desktop.ini
+.directory
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+package-lock.json
+package.json
