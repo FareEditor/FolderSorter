@@ -294,7 +294,8 @@ iconify-icon { display: inline-flex; vertical-align: middle; }
 'use strict';
 
 var csInterface = new CSInterface();
-var SOURCE_URL = "https://github.com/FareEditor/adobe-folder-sorter";
+var SOURCE_URL = "https://github.com/FareEditor/FolderSorter";
+var UPDATE_URL = "https://github.com/FareEditor/FolderSorter/releases/latest"
 
 // ── Default settings ─────────────────────────────────────────────────────────
 
@@ -690,18 +691,26 @@ function isNewerVersion(current, latest) {
 function renderUpdateBanner(version, url) {
     var el = document.getElementById('update-notification');
     if (!el) return;
+
     el.innerHTML =
         '<div class="update-banner">' +
             '<div class="update-banner-text">' +
                 '<iconify-icon icon="material-symbols-light:new-releases-rounded" style="font-size:16px;color:var(--accent)"></iconify-icon>' +
                 '<span><span class="update-banner-label">v' + h(version) + ' available</span> — a new version of Folder Sorter is out.</span>' +
             '</div>' +
-            '<button class="btn-update" onclick="openUpdate(' + JSON.stringify(url) + ')">Download Update</button>' +
+            '<button class="btn-update" id="btnDownloadUpdate">Download Update</button>' +
         '</div>';
-}
 
-function openUpdate(url) {
-    cep.util.openURLInDefaultBrowser(url);
+    var btn = document.getElementById('btnDownloadUpdate');
+    if (btn) {
+        btn.addEventListener('click', function() {
+            if (window.cep) {
+                csInterface.openURLInDefaultBrowser(url);
+            } else {
+                window.open(url, '_blank');
+            }
+        });
+    }
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
