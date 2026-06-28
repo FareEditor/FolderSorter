@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ExtensionManifest Version="7.0" ExtensionBundleId="com.fareeditor.foldersorter" ExtensionBundleVersion="1.0"
+  ExtensionBundleName="Folder Sorter" 
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
     <Extension Id="com.fareeditor.foldersorter" Version="1.0" />
@@ -7,8 +8,8 @@
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
-      <Host Name="AEFT" Version="[14.0,99.9]" />
-      <Host Name="PPRO" Version="[14.0,99.9]" />
+      <Host Name="AEFT" Version="14.0" />
+      <Host Name="PPRO" Version="14.0" />
     </HostList>
     <LocaleList>
       <Locale Code="All" />
@@ -20,7 +21,6 @@
   <DispatchInfoList>
     <Extension Id="com.fareeditor.foldersorter">
       <DispatchInfo>
-        <Name>Folder Sorter</Name>
         <Resources>
           <MainPath>./client/index.html</MainPath>
           <ScriptPath>./host/index.jsx</ScriptPath>
@@ -45,7 +45,6 @@
     </Extension>
     <Extension Id="com.fareeditor.foldersorter.settings">
       <DispatchInfo>
-        <Name>Folder Sorter</Name>
         <Resources>
           <MainPath>./client/settings.html</MainPath>
           <CEFCommandLine>
