@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="7.0" ExtensionBundleId="com.foldersorter.panel" ExtensionBundleVersion="1.0.0"
+<ExtensionManifest Version="7.0" ExtensionBundleId="com.fareeditor.foldersorter" ExtensionBundleVersion="1.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.foldersorter.panel" Version="1.0" />
+    <Extension Id="com.fareeditor.foldersorter" Version="1.0" />
+    <Extension Id="com.fareeditor.foldersorter.settings" Version="1.0" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
@@ -17,14 +18,13 @@
     </RequiredRuntimeList>
   </ExecutionEnvironment>
   <DispatchInfoList>
-    <Extension Id="com.foldersorter.panel">
-      <DispatchInfo >
+    <Extension Id="com.fareeditor.foldersorter">
+      <DispatchInfo>
         <Resources>
           <MainPath>./client/index.html</MainPath>
           <ScriptPath>./host/index.jsx</ScriptPath>
           <CEFCommandLine>
             <Parameter>--enable-nodejs</Parameter>
-             <Parameter>--enable-media-stream</Parameter>
           </CEFCommandLine>
         </Resources>
         <Lifecycle>
@@ -38,6 +38,33 @@
               <Height>300</Height>
               <Width>250</Width>
             </Size>
+          </Geometry>
+        </UI>
+      </DispatchInfo>
+    </Extension>
+    <Extension Id="com.fareeditor.foldersorter.settings">
+      <DispatchInfo>
+        <Resources>
+          <MainPath>./client/settings.html</MainPath>
+          <CEFCommandLine>
+            <Parameter>--enable-nodejs</Parameter>
+          </CEFCommandLine>
+        </Resources>
+        <Lifecycle>
+          <AutoVisible>true</AutoVisible>
+        </Lifecycle>
+        <UI>
+          <Type>Modeless</Type>
+          <Menu>Folder Sorter — Settings</Menu>
+          <Geometry>
+            <Size>
+              <Height>540</Height>
+              <Width>700</Width>
+            </Size>
+            <MinSize>
+              <Height>400</Height>
+              <Width>560</Width>
+            </MinSize>
           </Geometry>
         </UI>
       </DispatchInfo>

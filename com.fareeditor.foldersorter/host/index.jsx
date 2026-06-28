@@ -21,31 +21,41 @@ if (!Array.prototype.indexOf) {
     };
 }
 
-try {
-    var xLib = new ExternalObject("lib:\PlugPlugExternalObject");
-} catch(e) { /* Ignore */ }
-
 // =========================================================
-// LOGGING SYSTEM
+// SETTINGS UTILITIES
 // =========================================================
 
-function jsxLog(message) {
-    try {
-        if (typeof CSXSEvent !== "undefined") {
-            var eventObj = new CSXSEvent();
-            eventObj.type = "com.foldersorter.debug"; 
-            eventObj.data = message.toString();
-            eventObj.dispatch();
+// Returns "ParentFolder" or "ParentFolder/ChildFolder".
+// Sub-folders have priority: an ext listed only in a child is matched
+// without needing to be in the parent's extensions array.
+function resolveTargetFolder(categories, ext) {
+    var parentMatch = null;
+    for (var i = 0; i < categories.length; i++) {
+        var cat = categories[i];
+        if (cat.children) {
+            for (var ci = 0; ci < cat.children.length; ci++) {
+                if (cat.children[ci].extensions.indexOf(ext) !== -1) {
+                    return cat.folder + '/' + cat.children[ci].folder;
+                }
+            }
         }
-    } catch(e) {}
+        if (!parentMatch && cat.extensions.indexOf(ext) !== -1) {
+            parentMatch = cat.folder;
+        }
+    }
+    return parentMatch; // null when no category matched
 }
 
-// Entry Point
-function runSorter() {
+// Entry Point — settingsJson is passed as a string from the CEP panel
+function runSorter(settingsJson) {
     try {
+        var settings = null;
+        if (settingsJson) {
+            try { settings = JSON.parse(settingsJson); } catch(e) {}
+        }
         var appName = BridgeTalk.appName;
-        if (appName == "premierepro") return sortPremiere();
-        else if (appName == "aftereffects") return sortAfterEffects();
+        if (appName == "premierepro") return sortPremiere(settings);
+        else if (appName == "aftereffects") return sortAfterEffects(settings);
         else return "Unknown App: " + appName;
     } catch (e) {
         return "CRASH MAIN: " + e.message + " (Line: " + e.line + ")";
@@ -55,12 +65,14 @@ function runSorter() {
 // =========================================================
 // PREMIERE PRO LOGIC
 // =========================================================
-function sortPremiere() {
+function sortPremiere(userSettings) {
     var project = app.project;
     if (!project) return "No project found";
     var root = project.rootItem;
-    
-    var categories = {
+
+    var ppSettings = userSettings ? userSettings.premiere : null;
+
+    var defaultCategories = {
         'jpg': 'Images', 'jpeg': 'Images', 'png': 'Images', 'gif': 'Images', 'tiff': 'Images', 'psd': 'Images', 'ai': 'Images',
         'mp4': 'Video', 'mov': 'Video', 'avi': 'Video', 'mxf': 'Video', 'r3d': 'Video', 'mts': 'Video', 'braw': 'Video',
         'mp3': 'Audio', 'wav': 'Audio', 'aif': 'Audio', 'wma': 'Audio', 'aac': 'Audio',
@@ -68,15 +80,16 @@ function sortPremiere() {
         'aep': 'Dynamic Link', 'prproj': 'Dynamic Link', 'plb': 'Dynamic Link'
     };
 
-    var templateTargetNames = [
-        "Atom", "Premiere Composer Files", "Motion Graphics Template Media", 
-        "Motion Bro", "AEJuice", "Files From AEJuice", "Envato", 
+    var templateTargetNames = ppSettings ? ppSettings.templates.sources : [
+        "Atom", "Premiere Composer Files", "Motion Graphics Template Media",
+        "Motion Bro", "AEJuice", "Files From AEJuice", "Envato",
         "Motion Array", "Storyblocks", "AA_POWER"
     ];
-    
-    var templatesFolderName = "Templates";
+
+    var templatesFolderName = ppSettings ? ppSettings.templates.folder : "Templates";
     var itemsToMove = [];
     var binCache = {};
+    var movedCount = 0;
 
     // PHASE 1: FILE SCANNING
     for (var i = 0; i < root.children.numItems; i++) {
@@ -88,11 +101,8 @@ function sortPremiere() {
         var isSeq = false;
         var mediaPath = "";
 
-        if (item.type === 1) { 
-            try { mediaPath = item.getMediaPath(); } catch(e){} 
-        }
-
         if (item.type === 1) {
+            try { mediaPath = item.getMediaPath(); } catch(e){}
             if (typeof item.isSequence === 'function') isSeq = item.isSequence();
             else isSeq = (!mediaPath || mediaPath === "");
         }
@@ -109,22 +119,30 @@ function sortPremiere() {
             var parts = item.name.split('.');
             if (parts.length > 1) {
                 var ext = parts.pop().toLowerCase();
-                if (categories[ext]) {
-                    targetFolder = categories[ext];
-                    shouldMove = true;
 
-                    // Epidemic Sound & Audio Sub-sorting Logic
-                    if (targetFolder === 'Audio') {
-                        var isES = (item.name.indexOf("ES_") === 0);
-                        var pathUpper = mediaPath.toUpperCase();
-                        var hasSFX = (pathUpper.indexOf("\\SFX\\") !== -1 || pathUpper.indexOf("/SFX/") !== -1);
-                        var hasMusic = (pathUpper.indexOf("\\MUSIC\\") !== -1 || pathUpper.indexOf("/MUSIC/") !== -1);
-                        
-                        if (isES || hasSFX || hasMusic) {
-                            if (hasSFX || (isES && item.name.toUpperCase().indexOf("SFX") !== -1)) {
-                                targetFolder += "/SFX";
-                            } else {
-                                targetFolder += "/Music";
+                if (ppSettings) {
+                    // Settings-based: sub-folders have priority over parent
+                    var resolved = resolveTargetFolder(ppSettings.categories, ext);
+                    if (resolved) {
+                        targetFolder = resolved;
+                        shouldMove = true;
+                    }
+                } else {
+                    // Default hardcoded + Epidemic Sound audio sub-sorting
+                    if (defaultCategories[ext]) {
+                        targetFolder = defaultCategories[ext];
+                        shouldMove = true;
+                        if (targetFolder === 'Audio') {
+                            var isES = (item.name.indexOf("ES_") === 0);
+                            var pathUpper = mediaPath.toUpperCase();
+                            var hasSFX = (pathUpper.indexOf("\\SFX\\") !== -1 || pathUpper.indexOf("/SFX/") !== -1);
+                            var hasMusic = (pathUpper.indexOf("\\MUSIC\\") !== -1 || pathUpper.indexOf("/MUSIC/") !== -1);
+                            if (isES || hasSFX || hasMusic) {
+                                if (hasSFX || (isES && item.name.toUpperCase().indexOf("SFX") !== -1)) {
+                                    targetFolder += "/SFX";
+                                } else {
+                                    targetFolder += "/Music";
+                                }
                             }
                         }
                     }
@@ -148,7 +166,6 @@ function sortPremiere() {
             }
         }
 
-        var movedCount = 0;
         for (var j = 0; j < itemsToMove.length; j++) {
             var t = itemsToMove[j];
             var targetBin = binCache[t.folderName];
@@ -175,12 +192,12 @@ function sortPremiere() {
     if (detectedTemplateFolders.length > 0) {
         var masterTemplateBin = findOrCreateBin(root, templatesFolderName);
 
-        for (var t = 0; t < detectedTemplateFolders.length; t++) {
-            var sourceBin = detectedTemplateFolders[t];
-            var targetBin = findBinInBin(masterTemplateBin, sourceBin.name);
+        for (var ti = 0; ti < detectedTemplateFolders.length; ti++) {
+            var sourceBin = detectedTemplateFolders[ti];
+            var existingBin = findBinInBin(masterTemplateBin, sourceBin.name);
 
-            if (targetBin) {
-                mergeBinsRecursively(sourceBin, targetBin);
+            if (existingBin) {
+                mergeBinsRecursively(sourceBin, existingBin);
                 if (sourceBin.children.numItems === 0) sourceBin.deleteBin();
             } else {
                 try { sourceBin.moveBin(masterTemplateBin); } catch(e) {}
@@ -188,7 +205,12 @@ function sortPremiere() {
         }
     }
 
-    return "Sorted files and templates.";
+    var msg = "";
+    if (movedCount > 0 && detectedTemplateFolders.length > 0) msg = "Sorted " + movedCount + " items, merged templates.";
+    else if (movedCount > 0) msg = "Sorted " + movedCount + " items.";
+    else if (detectedTemplateFolders.length > 0) msg = "Merged templates.";
+    else msg = "Nothing to sort.";
+    return msg;
 }
 
 function mergeBinsRecursively(sourceBin, targetBin) {
@@ -212,21 +234,24 @@ function mergeBinsRecursively(sourceBin, targetBin) {
 // =========================================================
 // AFTER EFFECTS LOGIC
 // =========================================================
-function sortAfterEffects() {
+function sortAfterEffects(userSettings) {
     var project = app.project;
     app.beginUndoGroup("Folder Sorter");
 
     try {
         var items = project.items;
-        var sortGroups = {}; 
+        var sortGroups = {};
         var precomps = [];
         var count = 0;
+        var folderCache = {};
 
-        var templateTargetNames = [
+        var aeSettings = userSettings ? userSettings.aftereffects : null;
+
+        var templateTargetNames = aeSettings ? aeSettings.templates.sources : [
             "AC Precomps", "Motion Bro", "AEJuice", "Files From AEJuice",
             "Envato", "Motion Array", "Storyblocks", "AA_POWER"
         ];
-        var templatesFolderName = "Templates";
+        var templatesFolderName = aeSettings ? aeSettings.templates.folder : "Templates";
 
         // PHASE 1: STANDARD SORTING
         for (var i = 1; i <= items.length; i++) {
@@ -238,10 +263,10 @@ function sortAfterEffects() {
 
             if (isFolder) {
                 var lowerName = item.name.toLowerCase();
-                if (lowerName.slice(-4) === ".aep" || lowerName.slice(-5) === ".aepx") ext = "dl";
+                if (lowerName.slice(-4) === ".aep" || lowerName.slice(-5) === ".aepx") ext = "aep";
                 else continue; 
             } else if (item instanceof FootageItem) {
-                // HOTFIX: Теперь солиды обрабатываем, давая им псевдо-расширение
+                // Solids have no file extension, so assign a pseudo-ext to route them correctly.
                 if (item.mainSource instanceof SolidSource) {
                     ext = "solid";
                 } else if (item.mainSource instanceof PlaceholderSource) {
@@ -259,34 +284,38 @@ function sortAfterEffects() {
 
             if (ext !== "") {
                 var targetFolder = "";
-                
-                // Обработка псевдо-расширения для солидов
-                if (ext === 'solid') targetFolder = 'Solids';
-                else if (['jpeg', 'jpg', 'png', 'tiff', 'tif', 'psd', 'exr', 'tga', 'webp', 'bmp'].indexOf(ext) !== -1) targetFolder = 'Images';
-                else if (['mov', 'mp4', 'mxf', 'avi', 'webm', 'mkv', 'flv', 'r3d', 'braw', 'mts'].indexOf(ext) !== -1) targetFolder = 'Video Files';
-                else if (['ai', 'eps', 'pdf', 'svg'].indexOf(ext) !== -1) targetFolder = 'Vector Files';
-                else if (['wav', 'mp3', 'aac', 'm4a', 'wma', 'aiff'].indexOf(ext) !== -1) {
-                    targetFolder = 'Audio Files';
-                    
-                    var isES = (item.name.indexOf("ES_") === 0);
-                    var mediaPath = "";
-                    try { if (item.mainSource && item.mainSource.file) mediaPath = item.mainSource.file.fsName; } catch(e){}
-                    var pathUpper = mediaPath ? mediaPath.toUpperCase() : "";
-                    
-                    var hasSFX = (pathUpper.indexOf("\\SFX\\") !== -1 || pathUpper.indexOf("/SFX/") !== -1);
-                    var hasMusic = (pathUpper.indexOf("\\MUSIC\\") !== -1 || pathUpper.indexOf("/MUSIC/") !== -1);
-                    
-                    if (isES || hasSFX || hasMusic) {
-                        if (hasSFX || (isES && item.name.toUpperCase().indexOf("SFX") !== -1)) {
-                            targetFolder += "/SFX";
-                        } else {
-                            targetFolder += "/Music";
+
+                if (ext === 'solid') {
+                    targetFolder = 'Solids';
+                } else if (aeSettings) {
+                    // Settings-based: sub-folders have priority over parent
+                    var resolved = resolveTargetFolder(aeSettings.categories, ext);
+                    targetFolder = resolved || (ext.toUpperCase() + " Files");
+                } else {
+                    // Default hardcoded matching
+                    if (['jpeg', 'jpg', 'png', 'tiff', 'tif', 'psd', 'exr', 'tga', 'webp', 'bmp'].indexOf(ext) !== -1) targetFolder = 'Images';
+                    else if (['mov', 'mp4', 'mxf', 'avi', 'webm', 'mkv', 'flv', 'r3d', 'braw', 'mts'].indexOf(ext) !== -1) targetFolder = 'Video Files';
+                    else if (['ai', 'eps', 'pdf', 'svg'].indexOf(ext) !== -1) targetFolder = 'Vector Files';
+                    else if (['wav', 'mp3', 'aac', 'm4a', 'wma', 'aiff'].indexOf(ext) !== -1) {
+                        targetFolder = 'Audio Files';
+                        var isES = (item.name.indexOf("ES_") === 0);
+                        var mediaPath = "";
+                        try { if (item.mainSource && item.mainSource.file) mediaPath = item.mainSource.file.fsName; } catch(e){}
+                        var pathUpper = mediaPath ? mediaPath.toUpperCase() : "";
+                        var hasSFX  = (pathUpper.indexOf("\\SFX\\") !== -1 || pathUpper.indexOf("/SFX/") !== -1);
+                        var hasMusic = (pathUpper.indexOf("\\MUSIC\\") !== -1 || pathUpper.indexOf("/MUSIC/") !== -1);
+                        if (isES || hasSFX || hasMusic) {
+                            if (hasSFX || (isES && item.name.toUpperCase().indexOf("SFX") !== -1)) {
+                                targetFolder += "/SFX";
+                            } else {
+                                targetFolder += "/Music";
+                            }
                         }
                     }
+                    else if (['glb', 'gltf', 'sbsar', 'obj', 'fbx', 'c4d'].indexOf(ext) !== -1) targetFolder = '3D Models';
+                    else if (['aep', 'aepx', 'prproj'].indexOf(ext) !== -1) targetFolder = 'Dynamic Link';
+                    else targetFolder = ext.toUpperCase() + " Files";
                 }
-                else if (['glb', 'gltf', 'sbsar', 'obj', 'fbx', 'c4d'].indexOf(ext) !== -1) targetFolder = '3D Models';
-                else if (['aep', 'aepx', 'prproj'].indexOf(ext) !== -1) targetFolder = 'Dynamic Link';
-                else targetFolder = ext.toUpperCase() + " Files";
 
                 if (!sortGroups[targetFolder]) sortGroups[targetFolder] = [];
                 sortGroups[targetFolder].push(item);
@@ -295,7 +324,7 @@ function sortAfterEffects() {
 
         // Execute Moves
         for (var fName in sortGroups) {
-            var targetFolderItem = findOrCreateFolderAE(fName); 
+            var targetFolderItem = findOrCreateFolderAE(fName, folderCache);
             var list = sortGroups[fName];
             for (var j = 0; j < list.length; j++) {
                 try {
@@ -308,7 +337,7 @@ function sortAfterEffects() {
         }
 
         if (precomps.length > 0) {
-            var precompFolder = findOrCreateFolderAE("Compositions");
+            var precompFolder = findOrCreateFolderAE("Compositions", folderCache);
             for (var k = 0; k < precomps.length; k++) {
                 precomps[k].parentFolder = precompFolder;
                 count++;
@@ -317,19 +346,12 @@ function sortAfterEffects() {
 
         // PHASE 2: AE TEMPLATES DEEP MERGE
         var masterTemplateFolder = null;
-        for (var m = 1; m <= items.length; m++) {
-            if (items[m] instanceof FolderItem && items[m].name === templatesFolderName && items[m].parentFolder === project.rootFolder) {
-                masterTemplateFolder = items[m];
-                break;
-            }
-        }
-
         var parasites = [];
-        for (var p = 1; p <= items.length; p++) {
-            var pItem = items[p];
-            if (pItem instanceof FolderItem && pItem.parentFolder === project.rootFolder) {
-                 if (templateTargetNames.indexOf(pItem.name) !== -1) parasites.push(pItem);
-            }
+        for (var m = 1; m <= items.length; m++) {
+            var mItem = items[m];
+            if (!(mItem instanceof FolderItem) || mItem.parentFolder !== project.rootFolder) continue;
+            if (mItem.name === templatesFolderName) masterTemplateFolder = mItem;
+            else if (templateTargetNames.indexOf(mItem.name) !== -1) parasites.push(mItem);
         }
 
         if (parasites.length > 0) {
@@ -426,11 +448,12 @@ function findBinInBin(parentBin, name) {
     return null;
 }
 
-function findOrCreateFolderAE(pathStr) {
+function findOrCreateFolderAE(pathStr, cache) {
+    if (cache && cache[pathStr]) return cache[pathStr];
     var parts = pathStr.split('/');
     var project = app.project;
     var currentParent = project.rootFolder;
-    
+
     for (var i = 0; i < parts.length; i++) {
         var folderName = parts[i];
         var found = null;
@@ -449,6 +472,7 @@ function findOrCreateFolderAE(pathStr) {
             currentParent = newFolder;
         }
     }
+    if (cache) cache[pathStr] = currentParent;
     return currentParent;
 }
 

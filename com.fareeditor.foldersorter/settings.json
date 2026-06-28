@@ -1,0 +1,175 @@
+{
+  "premiere": {
+    "categories": [
+      {
+        "folder": "Images",
+        "extensions": [
+          "jpg",
+          "jpeg",
+          "png",
+          "gif",
+          "tiff",
+          "psd",
+          "ai"
+        ],
+        "children": []
+      },
+      {
+        "folder": "Video",
+        "extensions": [
+          "mp4",
+          "mov",
+          "avi",
+          "mxf",
+          "r3d",
+          "mts",
+          "braw"
+        ],
+        "children": []
+      },
+      {
+        "folder": "Audio",
+        "extensions": [
+          "mp3",
+          "wav",
+          "aif",
+          "wma",
+          "aac"
+        ],
+        "children": [
+          {
+            "folder": "uncompressed audio",
+            "extensions": [
+              "flac"
+            ]
+          }
+        ]
+      },
+      {
+        "folder": "Data",
+        "extensions": [
+          "xml",
+          "csv",
+          "srt"
+        ],
+        "children": []
+      },
+      {
+        "folder": "Dynamic Link",
+        "extensions": [
+          "aep",
+          "prproj",
+          "plb"
+        ],
+        "children": []
+      }
+    ],
+    "templates": {
+      "folder": "Templates",
+      "sources": [
+        "Atom",
+        "Premiere Composer Files",
+        "Motion Graphics Template Media",
+        "Motion Bro",
+        "AEJuice",
+        "Files From AEJuice",
+        "Envato",
+        "Motion Array",
+        "Storyblocks",
+        "AA_POWER"
+      ]
+    }
+  },
+  "aftereffects": {
+    "categories": [
+      {
+        "folder": "Images",
+        "extensions": [
+          "jpeg",
+          "jpg",
+          "png",
+          "tiff",
+          "tif",
+          "psd",
+          "exr",
+          "tga",
+          "webp",
+          "bmp"
+        ],
+        "children": []
+      },
+      {
+        "folder": "Video Files",
+        "extensions": [
+          "mov",
+          "mp4",
+          "mxf",
+          "avi",
+          "webm",
+          "mkv",
+          "flv",
+          "r3d",
+          "braw",
+          "mts"
+        ],
+        "children": []
+      },
+      {
+        "folder": "Vector Files",
+        "extensions": [
+          "ai",
+          "eps",
+          "pdf",
+          "svg"
+        ],
+        "children": []
+      },
+      {
+        "folder": "Audio Files",
+        "extensions": [
+          "wav",
+          "mp3",
+          "aac",
+          "m4a",
+          "wma",
+          "aiff"
+        ],
+        "children": []
+      },
+      {
+        "folder": "3D Models",
+        "extensions": [
+          "glb",
+          "gltf",
+          "sbsar",
+          "obj",
+          "fbx",
+          "c4d"
+        ],
+        "children": []
+      },
+      {
+        "folder": "Dynamic Link",
+        "extensions": [
+          "aep",
+          "aepx",
+          "prproj"
+        ],
+        "children": []
+      }
+    ],
+    "templates": {
+      "folder": "Templates",
+      "sources": [
+        "AC Precomps",
+        "Motion Bro",
+        "AEJuice",
+        "Files From AEJuice",
+        "Envato",
+        "Motion Array",
+        "Storyblocks",
+        "AA_POWER"
+      ]
+    }
+  }
+}

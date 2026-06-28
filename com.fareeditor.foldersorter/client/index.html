@@ -3,16 +3,15 @@
 <head>
     <meta charset="utf-8">
     <title>Folder Sorter</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
-        
+
         html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #222222; /* Родной цвет панели Adobe */
-            font-family: "Adobe Clean", "Segoe UI", sans-serif; 
+            background-color: #222222;
+            font-family: "Adobe Clean", "Segoe UI", sans-serif;
             user-select: none;
             cursor: default;
         }
@@ -43,7 +42,7 @@
             color: #2d8ceb;
             width: 100%;
             height: 100%;
-            font-size: 14px;
+            font-size: 18px;
             border-radius: 4px;
             cursor: pointer;
             display: flex;
@@ -76,16 +75,14 @@
 <body>
 
     <div class="toolbar">
-        <button id="sortBtn" class="btn-action" title="Sort Files & Templates">
-            <i class="fa-solid fa-folder-tree"></i>
+        <button id="sortBtn" class="btn-action" title="Sort Files &amp; Templates">
+            <iconify-icon icon="material-symbols-light:account-tree-rounded"></iconify-icon>
         </button>
 
-        <button id="codeBtn" class="btn-action btn-secondary" title="Source Code (v3)">
-            <i class="fa-solid fa-code"></i>
-        </button>
     </div>
 
     <script src="js/CSInterface.js"></script>
+    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
