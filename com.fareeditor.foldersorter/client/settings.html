@@ -231,6 +231,27 @@ html, body {
 ::-webkit-scrollbar-thumb { background: #404040; border-radius: 3px; }
 
 iconify-icon { display: inline-flex; vertical-align: middle; }
+
+/* ── Update notification ────────────────────────────── */
+#update-notification { flex-shrink: 0; }
+.update-banner {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    padding: 9px 16px;
+    background: rgba(45,140,235,0.1);
+    border-top: 1px solid rgba(45,140,235,0.3);
+    font-size: 11px; color: var(--text);
+}
+.update-banner-text { display: flex; align-items: center; gap: 7px; }
+.update-banner-label { color: var(--accent); font-weight: 600; }
+.btn-update {
+    background: var(--accent); color: #fff;
+    border: none; border-radius: 3px;
+    padding: 4px 11px; font-size: 11px;
+    font-family: inherit; cursor: pointer; flex-shrink: 0;
+    transition: background 0.1s;
+}
+.btn-update:hover { background: var(--accent-hover); }
 </style>
 </head>
 <body>
@@ -254,6 +275,7 @@ iconify-icon { display: inline-flex; vertical-align: middle; }
         </div>
     </div>
 
+    <div id="update-notification"></div>
     <div class="footer">
         <a class="footer-link" onclick="openSource()">
             <iconify-icon icon="material-symbols-light:code-rounded" style="font-size:14px"></iconify-icon>
@@ -634,10 +656,59 @@ function a(str) {
     return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
 }
 
+// ── Update check ──────────────────────────────────────────────────────────────
+
+function checkForUpdates() {
+    var currentVersion = "1.0";
+    fetch('https://api.github.com/repos/FareEditor/FolderSorter/releases/latest', {
+        headers: { 'User-Agent': 'Adobe-CEP-Extension' }
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        var tag = (data.tag_name || '').replace(/^v/i, '');
+        if (!tag) return;
+        if (isNewerVersion(currentVersion, tag)) renderUpdateBanner(tag, data.html_url);
+    })
+    .catch(function(err) {
+        console.error('Folder Sorter: update check failed —', err);
+    });
+}
+
+function isNewerVersion(current, latest) {
+    var c = current.split('.').map(Number);
+    var l = latest.split('.').map(Number);
+    var len = Math.max(c.length, l.length);
+    for (var i = 0; i < len; i++) {
+        var cv = c[i] || 0;
+        var lv = l[i] || 0;
+        if (lv > cv) return true;
+        if (lv < cv) return false;
+    }
+    return false;
+}
+
+function renderUpdateBanner(version, url) {
+    var el = document.getElementById('update-notification');
+    if (!el) return;
+    el.innerHTML =
+        '<div class="update-banner">' +
+            '<div class="update-banner-text">' +
+                '<iconify-icon icon="material-symbols-light:new-releases-rounded" style="font-size:16px;color:var(--accent)"></iconify-icon>' +
+                '<span><span class="update-banner-label">v' + h(version) + ' available</span> — a new version of Folder Sorter is out.</span>' +
+            '</div>' +
+            '<button class="btn-update" onclick="openUpdate(' + JSON.stringify(url) + ')">Download Update</button>' +
+        '</div>';
+}
+
+function openUpdate(url) {
+    cep.util.openURLInDefaultBrowser(url);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 loadSettings();
 render();
+checkForUpdates();
 
 </script>
 </body>
