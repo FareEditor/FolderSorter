@@ -43,11 +43,12 @@ Changes are applied after clicking **Save**. Clicking **Cancel** discards all ed
 # Installing:
 The easiest way to install the plugin is using the official **aescripts + aeplugins ZXP/UXP Installer**. 
 
-1. Download the latest `FolderSorter.zxp` from the [Releases](https://github.com/FareEditor/FolderSorter/releases/latest) section.
-2. Download and install the free [aescripts ZXP/UXP Installer](https://aescripts.com/learn/post/zxp-installer).
-3. Drag and drop the `FolderSorter.zxp` file into the installer window.
-4. Click **Install** (if prompted with a "Direct Installation" warning due to no Creative Cloud desktop session, just click **Install Anyway**).
-5. Open Premiere Pro or After Effects and find the plugin under:  
+1. Download the source code for the latest version from the [Releases](https://gitlab.com/fareeditor/FolderSorter/-/releases) section.
+2. Unzip the source code and move the com.fareeditor.foldersorter folder to the following path (depending on your system):
+**Win:** `C:\Program Files (x86)\Common Files\Adobe\CEP\extensions\`
+**Mac:** `/Library/Application Support/Adobe/CEP/extensions/`
+3. Enable CEP tester mode through the following files: [Win](https://gitlab.com/fareeditor/FolderSorter/-/blob/main/Add%20Keys.reg?ref_type=heads), [Mac](https://gitlab.com/fareeditor/FolderSorter/-/blob/main/install-as-admin)
+4. Open Premiere Pro or After Effects and find the plugin under:  
    `Window` -> `Extensions` -> `Folder Sorter`
 
 # License:
