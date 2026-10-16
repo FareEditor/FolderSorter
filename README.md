@@ -2,9 +2,6 @@
 
 This plugin sorts all files in Adobe After Effects and Premiere Pro projects into categories based on their extensions in the Project window.
 
-# ⚠️ Warning
-This plugin was written using vibe coding with Google's neural network "Gemini" and Anthropic's neural network "Claude." It was tested in real-world conditions, but I can't guarantee 100% stability.
-
 # Settings
 
 The plugin includes a settings window that lets you customize sorting rules without touching the source code. Open it via **Window → Extensions → Folder Sorter — Settings**.
